@@ -194,7 +194,13 @@ function App() {
       return;
     }
 
-    const { error } = await supabase.from('candidates').insert([newCandidate]);
+    // Convert empty string to null for optional Last Contact Date
+    const payloadToInsert = {
+      ...newCandidate,
+      'Last Contact Date': newCandidate['Last Contact Date'] === '' ? null : newCandidate['Last Contact Date']
+    };
+
+    const { error } = await supabase.from('candidates').insert([payloadToInsert]);
     if (error) { console.error("Error adding:", error); alert("Failed to add."); } 
     else { setIsAddModalOpen(false); setNewCandidate(initialCandidateState); setRefreshTrigger(prev => prev + 1); setCurrentPage(1); }
   };
@@ -204,7 +210,14 @@ function App() {
       alert("Please fill in all mandatory fields marked with an asterisk (*)."); 
       return; 
     }
-    const { error } = await supabase.from('candidates').update(editingCandidate).eq('ID', editingCandidate.ID);
+
+    // Convert empty string to null for optional Last Contact Date
+    const payloadToUpdate = {
+      ...editingCandidate,
+      'Last Contact Date': editingCandidate['Last Contact Date'] === '' ? null : editingCandidate['Last Contact Date']
+    };
+
+    const { error } = await supabase.from('candidates').update(payloadToUpdate).eq('ID', editingCandidate.ID);
     if (error) { console.error("Error updating:", error); alert("Failed to update."); } 
     else { setEditingCandidate(null); setRefreshTrigger(prev => prev + 1); }
   };
