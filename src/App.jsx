@@ -167,31 +167,36 @@ function App() {
     const emailToCheck = newCandidate.Email?.trim();
     const gmailToCheck = newCandidate.Gmail?.trim();
 
-    if (!newCandidate.Name?.trim() || !newCandidate.Country?.trim() || !newCandidate['Date of application']?.trim() || !emailToCheck || !newCandidate['Native language']?.trim()) { 
+    if (!newCandidate.Name?.trim() || !newCandidate.Country?.trim() || !newCandidate['Date of application']?.trim() || !newCandidate['Native language']?.trim()) { 
       alert("Please fill in all mandatory fields marked with an asterisk (*)."); 
       return; 
     }
 
     // --- DUPLICATE PREVENTION LOGIC ---
-    let checkConditions = `Email.eq."${emailToCheck}",Gmail.eq."${emailToCheck}"`;
+    let checkConditions = [];
+    if (emailToCheck) {
+      checkConditions.push(`Email.eq."${emailToCheck}"`, `Gmail.eq."${emailToCheck}"`);
+    }
     if (gmailToCheck) {
-      checkConditions += `,Email.eq."${gmailToCheck}",Gmail.eq."${gmailToCheck}"`;
+      checkConditions.push(`Email.eq."${gmailToCheck}"`, `Gmail.eq."${gmailToCheck}"`);
     }
 
-    const { data: existingCandidates, error: checkError } = await supabase
-      .from('candidates')
-      .select('ID')
-      .or(checkConditions);
+    if (checkConditions.length > 0) {
+      const { data: existingCandidates, error: checkError } = await supabase
+        .from('candidates')
+        .select('ID')
+        .or(checkConditions.join(','));
 
-    if (checkError) {
-      console.error("Error checking duplicates:", checkError);
-      alert("Failed to validate candidate data. Please try again.");
-      return;
-    }
+      if (checkError) {
+        console.error("Error checking duplicates:", checkError);
+        alert("Failed to validate candidate data. Please try again.");
+        return;
+      }
 
-    if (existingCandidates && existingCandidates.length > 0) {
-      alert("A candidate with this Email or Gmail already exists in the database. Please check your records.");
-      return;
+      if (existingCandidates && existingCandidates.length > 0) {
+        alert("A candidate with this Email or Gmail already exists in the database. Please check your records.");
+        return;
+      }
     }
 
     // Convert empty string to null for optional Last Contact Date
@@ -206,7 +211,7 @@ function App() {
   };
 
   const handleUpdateCandidate = async () => {
-    if (!editingCandidate.Name?.trim() || !editingCandidate.Country?.trim() || !editingCandidate['Date of application']?.trim() || !editingCandidate.Email?.trim() || !editingCandidate['Native language']?.trim()) { 
+    if (!editingCandidate.Name?.trim() || !editingCandidate.Country?.trim() || !editingCandidate['Date of application']?.trim() || !editingCandidate['Native language']?.trim()) { 
       alert("Please fill in all mandatory fields marked with an asterisk (*)."); 
       return; 
     }
@@ -392,7 +397,7 @@ function App() {
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Country *</label><br/><input style={inputStyle} type="text" value={newCandidate.Country} onChange={(e) => setNewCandidate({...newCandidate, Country: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Phone</label><br/><input style={inputStyle} type="text" value={newCandidate.Phone} onChange={(e) => setNewCandidate({...newCandidate, Phone: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Date of Application *</label><br/><input style={inputStyle} type="date" value={newCandidate['Date of application']} onChange={(e) => setNewCandidate({...newCandidate, 'Date of application': e.target.value})} /></div>
-              <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Email *</label><br/><input style={inputStyle} type="email" value={newCandidate.Email} onChange={(e) => setNewCandidate({...newCandidate, Email: e.target.value})} /></div>
+              <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Email</label><br/><input style={inputStyle} type="email" value={newCandidate.Email} onChange={(e) => setNewCandidate({...newCandidate, Email: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Gmail</label><br/><input style={inputStyle} type="email" value={newCandidate.Gmail} onChange={(e) => setNewCandidate({...newCandidate, Gmail: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Native Language *</label><br/><input style={inputStyle} type="text" value={newCandidate['Native language']} onChange={(e) => setNewCandidate({...newCandidate, 'Native language': e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Native English (C1+)</label><br/><select style={inputStyle} value={newCandidate['Native English (or above C1)']} onChange={(e) => setNewCandidate({...newCandidate, 'Native English (or above C1)': e.target.value})}><option value="No">No</option><option value="Yes">Yes</option><option value="N/A">N/A</option></select></div>
@@ -434,7 +439,7 @@ function App() {
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Country *</label><br/><input style={inputStyle} type="text" value={editingCandidate.Country || ''} onChange={(e) => setEditingCandidate({...editingCandidate, Country: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Phone</label><br/><input style={inputStyle} type="text" value={editingCandidate.Phone || ''} onChange={(e) => setEditingCandidate({...editingCandidate, Phone: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Date of Application *</label><br/><input style={inputStyle} type="date" value={editingCandidate['Date of application'] || ''} onChange={(e) => setEditingCandidate({...editingCandidate, 'Date of application': e.target.value})} /></div>
-              <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Email *</label><br/><input style={inputStyle} type="email" value={editingCandidate.Email || ''} onChange={(e) => setEditingCandidate({...editingCandidate, Email: e.target.value})} /></div>
+              <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Email</label><br/><input style={inputStyle} type="email" value={editingCandidate.Email || ''} onChange={(e) => setEditingCandidate({...editingCandidate, Email: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Gmail</label><br/><input style={inputStyle} type="email" value={editingCandidate.Gmail || ''} onChange={(e) => setEditingCandidate({...editingCandidate, Gmail: e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Native Language *</label><br/><input style={inputStyle} type="text" value={editingCandidate['Native language'] || ''} onChange={(e) => setEditingCandidate({...editingCandidate, 'Native language': e.target.value})} /></div>
               <div><label style={{color: '#555', fontSize: '12px', fontWeight: 'bold'}}>Native English (C1+)</label><br/><select style={inputStyle} value={editingCandidate['Native English (or above C1)'] || 'No'} onChange={(e) => setEditingCandidate({...editingCandidate, 'Native English (or above C1)': e.target.value})}><option value="No">No</option><option value="Yes">Yes</option><option value="N/A">N/A</option></select></div>
