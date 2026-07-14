@@ -57,6 +57,27 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- NEW: INVISIBLE TRACKING EFFECT ---
+  useEffect(() => {
+    const updateLastSeen = async () => {
+      // If there is an active session with a user email, silently ping the database
+      if (session?.user?.email) {
+        const { error } = await supabase
+          .from('worker_activity')
+          .upsert({ 
+            email: session.user.email, 
+            last_seen: new Date().toISOString() 
+          });
+
+        if (error) {
+          console.error("Tracking error:", error);
+        }
+      }
+    };
+
+    updateLastSeen();
+  }, [session]); // This runs automatically whenever the session status changes
+
   // --- LOGIN FUNCTION ---
   const handleLogin = async (e) => {
     e.preventDefault();
